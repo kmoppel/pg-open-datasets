@@ -6,10 +6,18 @@ Optionally one can also run some custom test scripts on each dataset after resto
 Dataset "implementations" can inspect some env vars set by the framework and need to set some file based vars / attributes,
 to implement download caching and avoid possibly expensive transformations.
 
+## Quick start
+
+1. Get the source `git clone https://github.com/kmoppel/pg-open-datasets.git && cd pg-open-datasets`
+2. Create a new Postgres instance if needed set the PG* connection variables declared at top of `process_all_datasets.sh`
+3. Review / set the `DATASETS` variable in `process_all_datasets.sh` to choose all / some datasets to download / restore
+4. Run `process_all_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
+   * Subsequent runs of the script for same datasets will not do any processing if the implementation sets the caching vars correctly
+
 # Datasets
 
 Pretty much any dataset I guess can be made to work with Postgres, but the idea is to choose ones that are little work + 
-large enough to be of interest for testing some Postgres features.
+large enough (1GB+) to be of interest for testing some Postgres features.
  
 ## Currently implemented datasets
 

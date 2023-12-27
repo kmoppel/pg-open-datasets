@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-set -e # For dev
+set -e # Bail on first error
 
 ### DB to import datasets into
 # export PGHOST=/var/run/postgresql/
 export PGHOST=/tmp
-export PGPORT=5555
+export PGPORT=5555 # Expected to be there
 export PGUSER=$USER
-export PATH=$PATH:/usr/lib/postgresql/15/bin
+export PATH=/usr/lib/postgresql/16/bin:$PATH
 
 ### Dataset handling
 export TEMP_FOLDER=`pwd`/tmp_dumps # The downloaded dumps are placed here
@@ -22,13 +22,12 @@ export DO_FETCH=1 # Optional, dataset could also pipe everything on restore
 export DO_TRANSFORM=1 # Optional, dataset could also pipe everything on restore
 export DO_RESTORE=1
 export DATA_ONLY_RESTORE=0 # No post-data (indexes / constraints) - if dataset supports it
-export DO_TESTS=0
+export DO_TESTS=0 # Run "test" scripts from the `tests` directory for each DB after restore
 TESTS_TO_RUN="pg_dump_compression" # Executes listed scripts from the "tests" folder after restoring a dataset
-export RDB_CONNSTR="host=localhost dbname=postgres"
+export RDB_CONNSTR="host=localhost dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the DB under testing in the end # TODO
-DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d)
-DATASETS="./datasets/imdb" # PS can do a manual override here to process only listed datasets
-DATASETS="./datasets/postgrespro_demodb_big" # PS can do a manual override here to process only listed datasets
+DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
+DATASETS="imdb pgbench" # PS can do a manual override here to process only listed datasets
 
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible
@@ -74,8 +73,8 @@ fi
 
 echo "DB connstr used for restoring: 'host=$PGHOST port=$PGPORT user=$PGUSER'"
 
-for DS_PATH in ${DATASETS} ; do
-  DS_NAME=$(basename "$DS_PATH")
+for DS_NAME in ${DATASETS} ; do
+  DS_PATH=./datasets/$DS_NAME
   echo -e "\n\n================================\nProcessing dataset ${DS_NAME} ...\n================================"
 
   if [ "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 ]; then
@@ -105,7 +104,7 @@ for DS_PATH in ${DATASETS} ; do
           fi
         done
         popd
-        echo "Dataset init done!"
+        echo -e "\nDataset init done!"
         echo -n "DB '$DATASET_NAME' size: "
         psql -XAtc "select pg_size_pretty(pg_database_size('$DATASET_NAME'))"
     else
@@ -133,4 +132,4 @@ done
 
 END_TIME=$(date +%s)
 TIME_SEC=$((END_TIME- START_TIME))
-echo "Done. Finished in $TIME_SEC seconds"
+echo -e "\nDone. Script finished in $TIME_SEC seconds"
