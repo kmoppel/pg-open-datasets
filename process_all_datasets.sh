@@ -22,9 +22,9 @@ export DO_FETCH=1 # Optional, dataset could also pipe everything on restore
 export DO_TRANSFORM=1 # Optional, dataset could also pipe everything on restore
 export DO_RESTORE=1
 export DATA_ONLY_RESTORE=0 # No post-data (indexes / constraints) - if dataset supports it
-export DO_TESTS=0 # Run "test" scripts from the `tests` directory for each DB after restore
-TESTS_TO_RUN="pg_dump_compression" # Executes listed scripts from the "tests" folder after restoring a dataset
-export RDB_CONNSTR="host=localhost dbname=postgres" # ResultsDB connect string
+export DO_TESTS=1 # Run "test" scripts from the `tests` directory for each DB after restore
+TESTS_TO_RUN="pg_dump_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
+export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the DB under testing in the end # TODO
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
 DATASETS="imdb pgbench" # PS can do a manual override here to process only listed datasets
@@ -40,7 +40,11 @@ create table if not exists public.dataset_test_results (
   dataset_name text not null,
   test_name text not null,
   test_id text not null,
-  test_value numeric not null
+  test_id_num numeric,
+  test_value numeric not null,
+  test_value_info text,
+  test_value_2 numeric,
+  test_value_info_2 text
 );
 EOF
 )
@@ -104,7 +108,7 @@ for DS_NAME in ${DATASETS} ; do
           fi
         done
         popd
-        echo -e "\nDataset init done!"
+        echo -e "\nDataset init done for '$DATASET_NAME'"
         echo -n "DB '$DATASET_NAME' size: "
         psql -XAtc "select pg_size_pretty(pg_database_size('$DATASET_NAME'))"
     else
@@ -118,6 +122,7 @@ for DS_NAME in ${DATASETS} ; do
     export TEST_OUT_DIR="$PWD/test_output/$DATASET_NAME"
     pushd ./tests
     for TEST_SCRIPT in $TESTS_TO_RUN ; do
+      export TEST_NAME=${TEST_SCRIPT%.sh}
       echo "Starting test $TEST_SCRIPT ..."
       TEST_START=$(psql -XAtc "select now()" template1)
       export TEST_START="$TEST_START"
