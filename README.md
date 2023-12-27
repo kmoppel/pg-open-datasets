@@ -9,9 +9,9 @@ to implement download caching and avoid possibly expensive transformations.
 ## Quick start
 
 1. Get the source `git clone https://github.com/kmoppel/pg-open-datasets.git && cd pg-open-datasets`
-2. Create a new Postgres instance if needed set the PG* connection variables declared at top of `process_all_datasets.sh`
-3. Review / set the `DATASETS` variable in `process_all_datasets.sh` to choose all / some datasets to download / restore
-4. Run `process_all_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
+2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`
+3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all / some datasets to download / restore
+4. Run `process_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
    * Subsequent runs of the script for same datasets will not do any processing if the implementation sets the caching vars correctly
 
 # Datasets
