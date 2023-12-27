@@ -63,6 +63,23 @@ Datasets can also set some optional "attribute" files which currently are FYI, b
 
 * https://wiki.postgresql.org/wiki/Sample_Databases
 * https://dataverse.harvard.edu/
+* Sysbench
+* https://github.com/timescale/benchmark-postgres
+* HammerDB https://www.enterprisedb.com/blog/how-to-benchmark-postgresql-using-hammerdb-open-source-tool
+  ./hammerdbcli auto scripts/tcl/postgres/tprocc/pg_tprocc_buildschema.tcl 15G on 32c
+* 1B taxi rides https://github.com/toddwschneider/nyc-taxi-data
+* https://www.gharchive.org/
+* https://ftp.ncbi.nih.gov/gene/DATA/
+  https://ftp.ncbi.nih.gov/gene/DATA/gene2accession.gz
+* https://archive.org/details/stackexchange
+* https://archive.org/download/stackexchange/askubuntu.com.7z 1G
+* https://postgrespro.com/community/demodb
+* https://ftp.ebi.ac.uk/pub/databases/RNAcentral/releases/22.0/database_files/
+* https://musicbrainz.org/doc/MusicBrainz_Database/Download
+  https://metabrainz.org/datasets/download
+* https://www.ncei.noaa.gov/data/global-hourly/archive/csv/
+* https://geoportaal.maaamet.ee/est/Ruumiandmed/Eesti-topograafia-andmekogu/Laadi-ETAK-andmed-alla-p609.html
+
 
 # Running tests on the datasets
 
