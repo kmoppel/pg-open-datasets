@@ -1,5 +1,3 @@
 * Move DROP_INPUT_FILES_AFTER_IMPORT to main loop from implementations
 * Add a flag to re-init a fresh PG instance for each dataset
   - this would allow to measure more precisely WAL generation with different settings etc
-* Add schema diagrams to datasets where possible ?
-* A script to reset all vars
