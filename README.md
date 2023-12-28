@@ -55,9 +55,13 @@ Following vars can be used in dataset implementation scripts:
 Datasets can also set some optional "attribute" files which currently are FYI, but later could be used for filtered runs.
 
 * dataset_type - textual | numerical | geospatial | mixed  
-* dump_size - approximate download size in GB  
-* restore_size - approximate restored-into-postgres size in GB  
-* restore_size_data_only - approximate restored-into-postgres size in GB when it supports DATA_ONLY_RESTORE  
+* dump_size - approximate download size in MB
+* restore_size - approximate restored-into-postgres size in MB
+* restore_size_data_only - approximate restored-into-postgres size in MB when it supports DATA_ONLY_RESTORE
+
+To find out how much disk space is needed to load all datasets run the `./calc_approx_datasets_total_size.sh` script.
+If the total size is too much to fit all datasets at once one can either leave some out or set `DROP_DB_AFTER_TESTING`
+which will process datasets one-by-one and drop after usage.
 
 ## Ideas / sources for adding more datasets
 
