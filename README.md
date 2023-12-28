@@ -94,10 +94,9 @@ pointing to tests/test_output/$DATASET for each dataset.
 Relevant env variables that can be used in test scripts:
 
   * RESULTSDB_CONNSTR - to use a below table to store results for easy analysis
-  * SCRIPT_START - to populate the "script_start" column in RESULTSDB_CONNSTR
-  * TEST_START - to populate the "test_start" column in RESULTSDB_CONNSTR
+  * TEST_START_TIME - to populate the "test_start" column in RESULTSDB_CONNSTR
   * DATASET_NAME - to populate the "dataset_name" column in RESULTSDB_CONNSTR
-  * TEST_NAME - to populate the "test_name" column in RESULTSDB_CONNSTR
+  * TEST_SCRIPT_NAME - to populate the "test_name" column in RESULTSDB_CONNSTR
   * TEST_OUT_DIR - to store file output for tests if preferred
 
 Schema of the test results storage table:
@@ -105,23 +104,17 @@ Schema of the test results storage table:
 ```sql
 create table if not exists public.dataset_test_results (
   created_on timestamptz not null default now(),
-  script_start timestamptz not null,
-  test_start timestamptz not null,
+  test_start_time timestamptz not null, /* test script start time for a dataset */
   dataset_name text not null,
-  test_name text not null,
+  test_script_name text not null,
   test_id text not null,
-  test_value numeric not null
+  test_id_num numeric,
+  test_value numeric not null,
+  test_value_info text,
+  test_value_2 numeric,
+  test_value_info_2 text
 );
 ```
 
-Thus a full result-storing SQL for some benchmark on some dataset should look something like:
+For an example usage see the `pg_dump_compression` test.
 
-```
-SQL_INS=$(cat <<-EOF
-INSERT INTO dataset_test_results (
-    script_start, test_start, dataset_name, test_name, test_value
-) VALUES (
-    '${SCRIPT_START}', '${TEST_START}', '${DATASET_NAME}', 'do_smth', 666
-);
-psql "$RESULTSDB_CONNSTR" -Xc "$SQL_INS"
-```

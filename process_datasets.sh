@@ -32,13 +32,14 @@ DATASETS="imdb pgbench" # PS can do a manual override here to process only liste
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible
 
+# Optional output table for "test" scripts to store some benchmark results for easy SQL analyses.
+# Max 2 "metrics" per row currently to be able to do some $work_done / $time_spent calculations
 SQL_RESULTS_TABLE=$(cat <<-EOF
 create table if not exists public.dataset_test_results (
   created_on timestamptz not null default now(),
-  script_start timestamptz not null,
-  test_start timestamptz not null,
+  test_start_time timestamptz not null, /* test script start time for a dataset */
   dataset_name text not null,
-  test_name text not null,
+  test_script_name text not null,
   test_id text not null,
   test_id_num numeric,
   test_value numeric not null,
@@ -124,8 +125,8 @@ for DS_NAME in ${DATASETS} ; do
     for TEST_SCRIPT in $TESTS_TO_RUN ; do
       export TEST_NAME=${TEST_SCRIPT%.sh}
       echo "Starting test $TEST_SCRIPT ..."
-      TEST_START=$(psql -XAtc "select now()" template1)
-      export TEST_START="$TEST_START"
+      TEST_START_TIME=$(psql -XAtc "select now()" template1)
+      export TEST_START_TIME="$TEST_START_TIME"
 
       ./${TEST_SCRIPT}
       echo "Finished running test $TEST_SCRIPT ..."
