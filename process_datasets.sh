@@ -27,7 +27,7 @@ TESTS_TO_RUN="pg_dump_compression.sh" # Executes listed scripts from the "tests"
 export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the DB under testing in the end # TODO
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
-DATASETS="imdb pgbench" # PS can do a manual override here to process only listed datasets
+DATASETS="pgbench" # PS can do a manual override here to process only listed datasets
 
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible
@@ -62,9 +62,16 @@ function init_resultsdb_or_fail() {
 
 # some basic validation
 if [ -z "$DATASETS" ]; then
-    echo "No dataset subfolders found the 'datasets' folder"
+    echo "No datasets selected"
     exit 1
 fi
+set +e
+psql -XAtc "select 1" template1 &>/dev/null
+if [ $? -ne 0 ]; then
+  echo "Could not connect to restore target DB. Check PG* env vars"
+  exit 1
+fi
+set -e
 
 START_TIME=$(date +%s)
 SCRIPT_START=$(psql -XAtc "select now()" template1)
@@ -119,17 +126,31 @@ for DS_NAME in ${DATASETS} ; do
   fi
 
   if [ "$DO_TESTS" -gt 0 ]; then
-    echo "Running dataset test for $DS_NAME..."
+    echo -e "\nRunning tests for $DS_NAME..."
     export TEST_OUT_DIR="$PWD/test_output/$DATASET_NAME"
     pushd ./tests
     for TEST_SCRIPT in $TESTS_TO_RUN ; do
+      if [ ! -d "vars" ]; then
+        mkdir vars
+      fi
+      if [ ! "$FRESH_START" -gt 0 ]; then
+        TEST_STATUS_MARKER=./vars/${TEST_SCRIPT}_${DATASET_NAME}
+        if [ -f "$TEST_STATUS_MARKER" ] ; then
+          TEST_STATUS=$(cat $TEST_STATUS_MARKER)
+          if [ "$TEST_STATUS" -eq 0 ]; then
+            echo "Skipping test $TEST_SCRIPT as already executed"
+            continue
+          fi
+        fi
+      fi
       export TEST_NAME=${TEST_SCRIPT%.sh}
-      echo "Starting test $TEST_SCRIPT ..."
+      echo -e "\nStarting test $TEST_SCRIPT ..."
       TEST_START_TIME=$(psql -XAtc "select now()" template1)
       export TEST_START_TIME="$TEST_START_TIME"
 
       ./${TEST_SCRIPT}
       echo "Finished running test $TEST_SCRIPT ..."
+      echo 0 > $TEST_STATUS_MARKER
     done
     popd
   fi
