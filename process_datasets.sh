@@ -135,7 +135,7 @@ for DS_NAME in ${DATASETS} ; do
         mkdir vars
       fi
       if [ ! "$FRESH_START" -gt 0 ]; then
-        TEST_STATUS_MARKER=./vars/${TEST_SCRIPT}_${DATASET_NAME}
+        TEST_STATUS_MARKER=./vars/${TEST_SCRIPT}_${DATASET_NAME}_result
         if [ -f "$TEST_STATUS_MARKER" ] ; then
           TEST_STATUS=$(cat $TEST_STATUS_MARKER)
           if [ "$TEST_STATUS" -eq 0 ]; then
