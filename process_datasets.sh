@@ -7,6 +7,7 @@ set -e # Bail on first error
 export PGHOST=/tmp
 export PGPORT=5555 # Expected to be there
 export PGUSER=$USER
+export PGDATABASE=postgres
 export PATH=/usr/lib/postgresql/16/bin:$PATH
 
 ### Dataset handling
@@ -66,7 +67,7 @@ if [ -z "$DATASETS" ]; then
     exit 1
 fi
 set +e
-psql -XAtc "select 1" template1 &>/dev/null
+psql -XAtc "select 1" &>/dev/null
 if [ $? -ne 0 ]; then
   echo "Could not connect to restore target DB. Check PG* env vars"
   exit 1
@@ -74,7 +75,7 @@ fi
 set -e
 
 START_TIME=$(date +%s)
-SCRIPT_START=$(psql -XAtc "select now()" template1)
+SCRIPT_START=$(psql -XAtc "select now()")
 export SCRIPT_START="$SCRIPT_START"
 
 echo "Starting at $SCRIPT_START ..."
@@ -83,7 +84,7 @@ if [ "$DO_TESTS" -gt 0 ]; then
     init_resultsdb_or_fail
 fi
 
-echo "DB connstr used for restoring: 'host=$PGHOST port=$PGPORT user=$PGUSER'"
+echo "DB connstr used for restoring: 'host=$PGHOST port=$PGPORT user=$PGUSER dbname=$PGDATABASE'"
 
 for DS_NAME in ${DATASETS} ; do
   DS_PATH=./datasets/$DS_NAME
