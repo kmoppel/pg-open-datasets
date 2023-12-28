@@ -65,6 +65,8 @@ which will process datasets one-by-one and drop after usage.
 
 ## Ideas / sources for adding more datasets
 
+* https://wiki.postgresql.org/wiki/Converting_from_other_Databases_to_PostgreSQL
+  - Could also import some available dumps for other DB systems
 * https://wiki.postgresql.org/wiki/Sample_Databases
 * https://dataverse.harvard.edu/
 * Sysbench
@@ -77,10 +79,7 @@ which will process datasets one-by-one and drop after usage.
   https://ftp.ncbi.nih.gov/gene/DATA/gene2accession.gz
 * https://archive.org/details/stackexchange
 * https://archive.org/download/stackexchange/askubuntu.com.7z 1G
-* https://postgrespro.com/community/demodb
 * https://ftp.ebi.ac.uk/pub/databases/RNAcentral/releases/22.0/database_files/
-* https://musicbrainz.org/doc/MusicBrainz_Database/Download
-  https://metabrainz.org/datasets/download
 * https://www.ncei.noaa.gov/data/global-hourly/archive/csv/
 * https://geoportaal.maaamet.ee/est/Ruumiandmed/Eesti-topograafia-andmekogu/Laadi-ETAK-andmed-alla-p609.html
 
