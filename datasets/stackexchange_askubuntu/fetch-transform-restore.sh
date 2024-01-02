@@ -19,7 +19,7 @@ OUT_FILENAME="askubuntu.com.7z"
 
 DUMP_FILE="$TEMP_FOLDER/$DATASET_NAME/$OUT_FILENAME"
 
-# Currently only importing 2 largest tables
+# TODO nice-parse later to columns, loading all xml files to rows for now
 SQL_SCHEMA_POSTHISTORY=$(cat <<-EOF
 
 CREATE UNLOGGED TABLE IF NOT EXISTS public."PostHistory" (
@@ -71,6 +71,24 @@ if [ "$DO_FETCH" -gt 0 ]; then
   fi
 fi
 
+if [ "$DO_TRANSFORM" -gt 0 ]; then
+  result=1
+  if [ -f ./vars/transform_result ]; then
+    result=`cat ./vars/transform_result`
+  fi
+  if [ "$result" -eq 0 ]; then
+    echo "Skipping transform based on transform_result marker"
+  else
+    if [ "$result" -eq 0 ]; then
+      echo "Skipping restore based on restore_result marker"
+    else
+      echo "Extracting the 7zip archive ..."
+      echo "7zz x $DUMP_FILE"
+      7zz x $DUMP_FILE # TODO only extract Posts.xml, PostHistory.xml ?
+      echo $? > ./vars/transform_result
+    fi
+  fi
+fi
 
 if [ "$DO_RESTORE" -gt 0 ]; then
   result=1
@@ -82,22 +100,21 @@ if [ "$DO_RESTORE" -gt 0 ]; then
   else
     DUMP_SIZE=$(cat ./attrs/dump_size)
 
-    echo "dropdb --if-exists $DATASET_NAME"
-    dropdb --if-exists $DATASET_NAME
+    echo "dropdb --if-exists --force $DATASET_NAME"
+    dropdb --if-exists --force $DATASET_NAME
     echo "createdb $DATASET_NAME"
     createdb $DATASET_NAME
 
+    echo "Loading XML rows to PG ..."
+    connstr="host=$PGHOST port=$PGPORT user=$PGUSER dbname=$PGDATABASE"
 
-    echo "Extracting the 7zip archive ..."
-    echo "7zz x $DUMP_FILE"
-    7zz x $DUMP_FILE # TODO only extract Posts.xml, PostHistory.xml
-
-    echo "Rolling out the SQL schema"
-
-
-    echo "pg_restore -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE"
-    pg_restore -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE
-    result=$?
-    echo -n "$result" > ./vars/restore_result
+    for f in `ls $TEMP_FOLDER/$DATASET_NAME/*.xml` ; do
+      fbase=$(basename ${f})
+      tbl=${fbase%%.xml}
+      echo "Running python3 load_xml_to_pg.py $f '$connstr' $tbl"
+      python3 load_xml_to_pg.py "$f" "$connstr" "$tbl"
+      result=$?
+      echo -n "$result" > ./vars/restore_result
+    done
   fi
 fi
