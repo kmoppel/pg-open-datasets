@@ -83,8 +83,8 @@ if [ "$DO_TRANSFORM" -gt 0 ]; then
       echo "Skipping restore based on restore_result marker"
     else
       echo "Extracting the 7zip archive ..."
-      echo "7zz x $DUMP_FILE"
-      7zz x $DUMP_FILE # TODO only extract Posts.xml, PostHistory.xml ?
+      echo "7zz x -o$TEMP_FOLDER/$DATASET_NAME $DUMP_FILE"
+      7zz x -o"$TEMP_FOLDER/$DATASET_NAME" $DUMP_FILE
       echo $? > ./vars/transform_result
     fi
   fi
