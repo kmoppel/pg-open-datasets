@@ -2,13 +2,13 @@
 
 set -e # Bail on first error
 
-### DB to import datasets into
+### DB to import datasets into. Expected to be there already
 # export PGHOST=/var/run/postgresql/
 export PGHOST=/tmp
 export PGPORT=5555 # Expected to be there
 export PGUSER=$USER
 export PGDATABASE=postgres
-export PATH=/usr/lib/postgresql/16/bin:$PATH
+export PATH=/usr/lib/postgresql/16/bin:$PATH # Adjust accordingly if not on latest Postgres
 
 ### Dataset handling
 export TEMP_FOLDER=`pwd`/tmp_dumps # The downloaded dumps are placed here
@@ -26,7 +26,7 @@ export DATA_ONLY_RESTORE=0 # No post-data (indexes / constraints) - if dataset s
 export DO_TESTS=1 # Run "test" scripts from the `tests` directory for each DB after restore
 TESTS_TO_RUN="pg_dump_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
 export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
-export DROP_DB_AFTER_TESTING=0 # Drop the DB under testing in the end # TODO
+export DROP_DB_AFTER_TESTING=0 # Drop the dataset after done with loading / testing. Minimizes storage requirements
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
 #DATASETS="stackexchange_askubuntu" # PS can do a manual override here to process only listed datasets
 
@@ -155,6 +155,13 @@ for DS_NAME in ${DATASETS} ; do
     done
     popd
   fi
+
+  if [ "$DROP_DB_AFTER_TESTING" -gt 0 ]; then
+    echo -e "\nDropping DB $DS_NAME due to DROP_DB_AFTER_TESTING set ..."
+    dropdb --force "$DS_NAME"
+  fi
+
+echo -e "\nDone with dataset '$DATASET_NAME'"
 
 done
 
