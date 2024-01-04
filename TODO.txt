@@ -1,3 +1,3 @@
-* Move DROP_INPUT_FILES_AFTER_IMPORT to main loop from implementations
 * Add a flag to re-init a fresh PG instance for each dataset
   - this would allow to measure more precisely WAL generation with different settings etc
+* Direct the restore output to some log file as a bit verbose currently
