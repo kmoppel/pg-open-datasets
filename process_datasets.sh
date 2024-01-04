@@ -126,7 +126,13 @@ for DS_NAME in ${DATASETS} ; do
     fi
   fi
 
-  if [ "$DO_TESTS" -gt 0 ]; then
+  RESTORE_RETCODE=1
+  if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
+    RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
+  fi
+
+  echo "RESTORE_RETCODE=$RESTORE_RETCODE"
+  if [ "$DO_TESTS" -gt 0 -a "$RESTORE_RETCODE" -eq 0 ]; then
     echo -e "\nRunning tests for $DS_NAME..."
     export TEST_OUT_DIR="$PWD/test_output/$DATASET_NAME"
     pushd ./tests
