@@ -1,23 +1,27 @@
 # pg-open-datasets
 
-A simplistic framework to automatically download, convert and load a selection of openly available sample Postgres datasets.
+A simple (Bash) framework to automatically download, convert and load a selection of openly available sample Postgres datasets.
 Optionally one can also run some custom test scripts on each dataset after restoring.
 
-Dataset "implementations" can inspect some env vars set by the framework and need to set some file based vars / attributes,
-to implement download caching and avoid possibly expensive transformations.
+Dataset "implementations" are basically Bash scripts that download / generate / extract / load the target dataset.
+Also they can inspect some env vars set by the framework to only do more targeted work, e.g. only download the dataset (useful
+for testing mostly) and need to set some file based vars / attributes, to implement "caching" to avoid possibly expensive transformations.
+
+The target instance for loading data into, or storing test results, need to be existing already.
 
 ## Quick start
 
 1. Get the source `git clone https://github.com/kmoppel/pg-open-datasets.git && cd pg-open-datasets`
 2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`
-3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all / some datasets to download / restore
+3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all (default) or some specific datasets to download / restore
 4. Run `process_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
    * Subsequent runs of the script for same datasets will not do any processing if the implementation sets the caching vars correctly
+5. Additionally one can set `DO_TESTS` / `TESTS_TO_RUN` to choose if some script should be executed for each dataset  
 
 # Datasets
 
-Pretty much any dataset I guess can be made to work with Postgres, but the idea is to choose ones that are little work + 
-large enough (1GB+) to be of interest for testing some Postgres features.
+Pretty much any dataset I guess can be made to work with Postgres, but the idea is to choose ones that require little work
+(ready-made SQL or COPY dumps would be perfect) + large enough (1GB+) to be of interest for testing some Postgres features.
  
 ## Currently implemented datasets
 
@@ -86,13 +90,12 @@ which will process datasets one-by-one and drop after usage.
 
 # Running tests on the datasets
 
-WIP
-
 Test scripts can be developed that will execute after restore of each dataset.
-These test scripts are expected to be cmdline runnables that after doing "something" enter the results into a results DB
-directly, accessible via the $RESULTSDB_CONNSTR env var. The actual DB behind $RESULTSDB_CONNSTR needs to be set up outside of
-the current scripting framework. Alternatively test scripts can just also store any textual output under $TEST_OUT_DIR,
-pointing to tests/test_output/$DATASET for each dataset.
+These test scripts are expected to be executable scripts, that do "something" with the freshly restored dataset.
+Also there's support for having a "test results" DB / table where test implementation can enter test results directly into
+a results DB, accessible via the $RESULTSDB_CONNSTR env var, to enable easy results analysing. The actual DB behind
+$RESULTSDB_CONNSTR needs to be set up outside of the current scripting framework. Alternatively test scripts can just also
+store any textual output under $TEST_OUT_DIR, pointing to tests/test_output/$DATASET for each dataset.
 
 Relevant env variables that can be used in test scripts:
 
@@ -119,5 +122,4 @@ create table if not exists public.dataset_test_results (
 );
 ```
 
-For an example usage see the `pg_dump_compression` test.
-
+For an example usage see the `pg_dump_compression` test, which is the only currently implemented test.
