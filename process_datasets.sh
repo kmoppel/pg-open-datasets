@@ -164,7 +164,11 @@ for DS_NAME in ${DATASETS} ; do
 
   if [ "$DROP_DB_AFTER_TESTING" -gt 0 ]; then
     echo -e "\nDropping DB $DS_NAME due to DROP_DB_AFTER_TESTING set ..."
+    echo "dropdb --force $DS_NAME"
     dropdb --force "$DS_NAME"
+    if [ $? -eq 0 ] ; then
+      rm "./datasets/$DATASET_NAME/vars/restore_result"
+    fi
   fi
 
 echo -e "\nDone with dataset '$DATASET_NAME'"
