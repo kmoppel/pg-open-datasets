@@ -29,8 +29,8 @@ if [ "$DO_RESTORE" -gt 0 ]; then
   if [ "$result" -eq 0 ]; then
     echo "Skipping restore based on restore_result marker"
   else
-    RESTORE_SIZE=$(cat ./attrs/dump_size)
-    echo "Restoring $DATASET_NAME - expected restore size $RESTORE_SIZE ..."
+    RESTORE_SIZE=$(cat ./attrs/restore_size)
+    echo "Restoring $DATASET_NAME - expected restore size $RESTORE_SIZE MB ..."
 
     if [ "$SET_UNLOGGED" -gt 0 ]; then
       unzip -p $DUMP_FILE | sed -E "s/(DATABASE|connect) demo/\1 $DATASET_NAME/g;s/^DROP DATABASE/DROP DATABASE IF EXISTS/g;s/^CREATE TABLE/CREATE UNLOGGED TABLE/g" | psql -X template1
