@@ -14,9 +14,12 @@ The target instance for loading data into, or storing test results, need to be e
 1. Get the source `git clone https://github.com/kmoppel/pg-open-datasets.git && cd pg-open-datasets`
 2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`
 3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all (default) or some specific datasets to download / restore
-4. Run `process_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
+4. Install / verify a few expected dependencies (assuming Ubuntu / Debian)
+  - `apt install postgresql 7zip python3-pip`
+  - `pip install psycopg`
+5. Run `process_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
    * Subsequent runs of the script for same datasets will not do any processing if the implementation sets the caching vars correctly
-5. Additionally one can set `DO_TESTS` / `TESTS_TO_RUN` to choose if some script should be executed for each dataset  
+6. Additionally one can set `DO_TESTS` / `TESTS_TO_RUN` to choose if some script should be executed for each dataset
 
 # Datasets
 
