@@ -6,8 +6,16 @@ set -e
 # TEST_OUT_DIR
 # TEST_START_TIME
 
-#METHOD_LVLS="gzip:1 gzip:3 gzip:5 gzip:7 gzip:9 lz4:1 lz4:3 lz4:5 lz4:7 lz4:9 lz4:11 zstd:1 zstd:5 zstd:9 zstd:13 zstd:17 zstd:21"
-METHOD_LVLS="gzip:1 gzip:3 gzip:5 lz4:1 lz4:3 lz4:5 zstd:1 zstd:5 zstd:9"
+METHOD_LVLS="gzip:1 gzip:3 gzip:5 gzip:7 gzip:9 lz4:1 lz4:3 lz4:5 lz4:7 lz4:9 lz4:11 zstd:1 zstd:5 zstd:9 zstd:13 zstd:17 zstd:21"
+#METHOD_LVLS="gzip:1 gzip:3 gzip:5 lz4:1 lz4:3 lz4:5 zstd:1 zstd:5 zstd:9"
+
+echo "Doing a cache warmup pg_basebackups ..."
+T1=$(date +%s%3N) # Epoch millis
+#BYTES=$(pg_dump -Z $METHOD:$LVL $DATASET_NAME | wc -c)
+pg_basebackup -c fast -Ft -D- -X none --no-manifest &>/dev/null
+T2=$(date +%s%3N)
+DURATION=$((T2-T1))
+echo "Done in $DURATION s"
 
 for ML in $METHOD_LVLS ; do
 

@@ -30,13 +30,14 @@ Pretty much any dataset I guess can be made to work with Postgres, but the idea 
 
 "Implemented" datasets can be found under the "datasets" folder
 
-| Dataset                      | Download size | Restored size | Type       |
-|------------------------------|:-------------:|--------------:|------------|
-| IMDB                         |      1.2      |           8.5 | textual    |
-| Mouse Genome sample data set |      3.7      |            65 | numerical  |
-| OSM Australia                |      1.1      |           6.2 | geospatial |
-| Pgbench                      |       -       |            15 | mixed      |
-| Postgres Pro demo DB big      |      0.3      |           2.6 | mixed      |
+| Dataset                      | Download size (GB) | Restored size | Type        |
+|------------------------------|:------------------:|--------------:|-------------|
+| IMDB                         |        1.2         |           8.5 | textual     |
+| Mouse Genome sample data set |        3.7         |            65 | numerical   |
+| OSM Australia                |        1.1         |           6.2 | geospatial  |
+| Pgbench                      |         -          |            15 | mixed       |
+| Postgres Pro demo DB big     |        0.3         |           2.6 | mixed       |
+| stackexchange_askubuntu      |         1          |           5.2 | textual     |
 
 ## Adding datasets
 
@@ -125,4 +126,4 @@ create table if not exists public.dataset_test_results (
 );
 ```
 
-For an example usage see the `pg_dump_compression` test, which is the only currently implemented test.
+For example "implementations" look in `tests` folder.
