@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
-set -e # Bail on first error
+set -euo pipefail # Bail on first error
 
 ### DB to import datasets into. Expected to be there already
 # export PGHOST=/var/run/postgresql/
 export PGHOST=/tmp
-export PGPORT=5555 # Expected to be there
+export PGPORT=5555 # Expected to be there if DO_INITDB_FOR_EACH_DATASET not set
 export PGUSER=$USER
 export PGDATABASE=postgres
 export PATH=/usr/lib/postgresql/16/bin:$PATH # Adjust accordingly if not on latest Postgres
+
+export DO_INITDB_FOR_EACH_DATASET=1 # Create a fresh cluster for every dataset
+export INITDB_TMP_DIR=/tmp/pg-open-datasets # Only used if DO_INITDB_FOR_EACH_DATASET set
 
 ### Dataset handling
 export TEMP_FOLDER=`pwd`/tmp_dumps # The downloaded dumps are placed here
@@ -25,10 +28,11 @@ export DO_RESTORE=1
 export DATA_ONLY_RESTORE=0 # No post-data (indexes / constraints) - if dataset supports it
 export DO_TESTS=1 # Run "test" scripts from the `tests` directory for each DB after restore
 TESTS_TO_RUN="pg_dump_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
+TESTS_TO_RUN="pg_basebackup_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
 export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the dataset after done with loading / testing. Minimizes storage requirements
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
-#DATASETS="stackexchange_askubuntu" # PS can do a manual override here to process only listed datasets
+DATASETS="pgbench imdb" # PS can do a manual override here to process only listed datasets
 
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible
@@ -61,21 +65,76 @@ function init_resultsdb_or_fail() {
   fi
 }
 
+export PGTEMP_CONF=$(cat <<- "EOF"
+unix_socket_directories='/tmp'
+shared_preload_libraries='pg_stat_statements'
+wal_compression=zstd
+track_io_timing=on
+track_functions=pl
+checkpoint_timeout=1h
+max_wal_size=10GB
+effective_io_concurrency=200
+maintenance_io_concurrency=200
+random_page_cost=1.1
+maintenance_work_mem=1GB
+shared_buffers=1GB
+effective_cache_size=16GB
+max_parallel_workers_per_gather=4
+work_mem=256MB
+autovacuum=off
+synchronous_commit=off
+EOF
+)
+
+function init_new_cluster() {
+  DATASET_NAME=$1
+  mkdir -p "$INITDB_TMP_DIR"
+
+  echo "Force-stopping currently running instance if any ..."
+  if [ -d "$INITDB_TMP_DIR" ]; then
+    set +e
+    echo "pg_ctl -D $INITDB_TMP_DIR stop -m i --wait"
+    pg_ctl -D $INITDB_TMP_DIR stop -m i --wait
+    echo "rm -rf $INITDB_TMP_DIR"
+    rm -rf $INITDB_TMP_DIR
+    set -e
+  fi
+
+  echo "initdb --no-sync -A trust $INITDB_TMP_DIR"
+  initdb --no-sync -A trust $INITDB_TMP_DIR &> /dev/null
+
+  echo "$PGTEMP_CONF" >> $INITDB_TMP_DIR/postgresql.conf
+  echo "cluster_name='$DATASET_NAME'" >> $INITDB_TMP_DIR/postgresql.conf
+  echo "port=$PGPORT" >> $INITDB_TMP_DIR/postgresql.conf
+
+  echo "pg_ctl -D $INITDB_TMP_DIR -l $INITDB_TMP_DIR/logfile start --wait"
+  pg_ctl -D $INITDB_TMP_DIR -l $INITDB_TMP_DIR/logfile start --wait
+
+  sleep 1
+  echo "Testing connection to new cluster at $INITDB_TMP_DIR ..."
+  psql -XAtc "select 1" template1 &>/dev/null
+
+  echo "New cluster initialized for dataset $DATASET_NAME!"
+}
+
 # some basic validation
 if [ -z "$DATASETS" ]; then
     echo "No datasets selected"
     exit 1
 fi
-set +e
-psql -XAtc "select 1" &>/dev/null
-if [ $? -ne 0 ]; then
-  echo "Could not connect to restore target DB. Check PG* env vars"
-  exit 1
+
+if [ "$DO_INITDB_FOR_EACH_DATASET" -eq 0 ]; then # Using an existing instance, test conn
+  set +e
+  psql -XAtc "select 1" &>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Could not connect to restore target DB. Check PG* env vars"
+    exit 1
+  fi
+  set -e
 fi
-set -e
 
 START_TIME=$(date +%s)
-SCRIPT_START=$(psql -XAtc "select now()")
+SCRIPT_START=$(psql "$RDB_CONNSTR" -XAtc "select now()")
 export SCRIPT_START="$SCRIPT_START"
 
 echo "Starting at $SCRIPT_START ..."
@@ -90,10 +149,16 @@ for DS_NAME in ${DATASETS} ; do
   DS_PATH=./datasets/$DS_NAME
   echo -e "\n\n================================\nProcessing dataset ${DS_NAME} ...\n================================"
 
+  export DATASET_NAME=${DS_NAME}
+  export PGDATABASE=${DS_NAME}
+
+  if [ "$DO_INITDB_FOR_EACH_DATASET" -gt 0 ]; then
+    init_new_cluster $DATASET_NAME
+  fi
+
   if [ "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 ]; then
     echo "Running dataset init for $DS_NAME..."
-    export DATASET_NAME=${DS_NAME}
-    export PGDATABASE=${DS_NAME}
+
     mkdir -p $TEMP_FOLDER/$DATASET_NAME
 
     if [ -f "${DS_PATH}/fetch-transform-restore.sh" ] ; then
