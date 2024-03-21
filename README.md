@@ -30,14 +30,15 @@ Pretty much any dataset I guess can be made to work with Postgres, but the idea 
 
 "Implemented" datasets can be found under the "datasets" folder
 
-| Dataset                      | Download size (GB) | Restored size | Type        |
-|------------------------------|:------------------:|--------------:|-------------|
-| IMDB                         |        1.2         |           8.5 | textual     |
-| Mouse Genome sample data set |        3.7         |            65 | numerical   |
-| OSM Australia                |        1.1         |           6.2 | geospatial  |
-| Pgbench                      |         -          |            15 | mixed       |
-| Postgres Pro demo DB big     |        0.3         |           2.6 | mixed       |
-| stackexchange_askubuntu      |         1          |           5.2 | textual     |
+| Dataset                      | Download size (GB) | Restored size | Type       |
+|------------------------------|:------------------:|--------------:|------------|
+| IMDB                         |        1.2         |           8.5 | textual    |
+| Mouse Genome sample data set |        3.7         |            65 | numeric    |
+| OSM Australia                |        1.1         |           6.2 | geospatial |
+| Pgbench                      |         -          |            15 | mixed      |
+| Postgres Pro demo DB big     |        0.3         |           2.6 | mixed      |
+| stackexchange_askubuntu      |         1          |           5.3 | textual    |
+| NYC Yellow Cab trips 2021    |        2.8         |           5.2 | numeric    |
 
 ## Adding datasets
 
