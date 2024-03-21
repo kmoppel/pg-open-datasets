@@ -159,10 +159,6 @@ for DS_NAME in ${DATASETS} ; do
 
   if [ "$DO_INITDB_FOR_EACH_DATASET" -gt 0 ] && [ "$RESTORE_RETCODE" -ne 0 ]; then
     init_new_cluster $DATASET_NAME
-
-    if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
-      RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
-    fi
   fi
 
   if [ "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 ]; then
@@ -200,6 +196,9 @@ for DS_NAME in ${DATASETS} ; do
     fi
   fi
 
+  if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
+    RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
+  fi
   echo "RESTORE_RETCODE=$RESTORE_RETCODE"
   if [ "$DO_TESTS" -gt 0 -a "$RESTORE_RETCODE" -eq 0 ]; then
     echo -e "\nRunning tests for $DS_NAME..."
