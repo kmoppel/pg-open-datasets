@@ -32,7 +32,7 @@ TESTS_TO_RUN="pg_basebackup_compression.sh" # Executes listed scripts from the "
 export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the dataset after done with loading / testing. Minimizes storage requirements
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
-DATASETS="pgbench imdb" # PS can do a manual override here to process only listed datasets
+DATASETS="nyc_taxi_rides" # PS can do a manual override here to process only listed datasets
 
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible
@@ -152,8 +152,17 @@ for DS_NAME in ${DATASETS} ; do
   export DATASET_NAME=${DS_NAME}
   export PGDATABASE=${DS_NAME}
 
-  if [ "$DO_INITDB_FOR_EACH_DATASET" -gt 0 ]; then
+  RESTORE_RETCODE=1
+  if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
+    RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
+  fi
+
+  if [ "$DO_INITDB_FOR_EACH_DATASET" -gt 0 ] && [ "$RESTORE_RETCODE" -ne 0 ]; then
     init_new_cluster $DATASET_NAME
+
+    if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
+      RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
+    fi
   fi
 
   if [ "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 -o "$DO_FETCH" -gt 0 ]; then
@@ -189,11 +198,6 @@ for DS_NAME in ${DATASETS} ; do
         echo "WARNING: ${DS_PATH}/fetch-transform-restore.sh not found. Skipping dataset ${DS_NAME}"
         continue
     fi
-  fi
-
-  RESTORE_RETCODE=1
-  if [ -f "./datasets/$DATASET_NAME/vars/restore_result" ] ; then
-    RESTORE_RETCODE=$(cat "./datasets/$DATASET_NAME/vars/restore_result")
   fi
 
   echo "RESTORE_RETCODE=$RESTORE_RETCODE"
