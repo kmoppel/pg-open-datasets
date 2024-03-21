@@ -9,7 +9,7 @@ set -e
 METHOD_LVLS="gzip:1 gzip:3 gzip:5 gzip:7 gzip:9 lz4:1 lz4:3 lz4:5 lz4:7 lz4:9 lz4:11 zstd:1 zstd:5 zstd:9 zstd:13 zstd:17 zstd:21"
 #METHOD_LVLS="gzip:1 lz4:1 zstd:1"
 
-echo "Doing a cache warmup pg_basebackups ..."
+echo "Doing an untimed cache warmup pg_basebackup ..."
 T1=$(date +%s%3N) # Epoch millis
 #BYTES=$(pg_dump -Z $METHOD:$LVL $DATASET_NAME | wc -c)
 pg_basebackup -c fast -Ft -D- -X none --no-manifest &>/dev/null
@@ -25,8 +25,13 @@ LVL=${splits[1]}
 IFS=
 
 echo "Testing pg_basebackup $METHOD:$LVL on $DATASET_NAME"
+
+for i in 1 2 3 ; do
+echo "Doing loop $i ..."
+
 T1=$(date +%s%3N) # Epoch millis
 #BYTES=$(pg_dump -Z $METHOD:$LVL $DATASET_NAME | wc -c)
+echo "pg_basebackup -c fast -Ft -D- -X none --no-manifest --compress=server-$METHOD:$LVL | wc -c"
 BYTES=$(pg_basebackup -c fast -Ft -D- -X none --no-manifest --compress=server-$METHOD:$LVL | wc -c)
 T2=$(date +%s%3N)
 DURATION=$((T2-T1))
@@ -42,5 +47,8 @@ EOF
 )
 echo "Adding test results to RDB for $TEST_SCRIPT $METHOD LVL $LVL ..."
 psql "$RDB_CONNSTR" -X -c "$SQL_INS"
+
+echo "Loop $i done"
+done
 
 done

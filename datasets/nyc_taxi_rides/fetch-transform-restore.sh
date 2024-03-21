@@ -87,14 +87,15 @@ if [ "$DO_RESTORE" -gt 0 ]; then
       echo "Loading file $csv via COPY ..."
       psql -Xq -c "\copy trips from '$csv' csv header" $DATASET_NAME
     done
+    result=$?
 
     if [ "$DATA_ONLY_RESTORE" -eq 0 ]; then
       echo "Creating indexes ..."
       echo "$DDL_IDX"
       echo "$DDL_IDX" | psql -Xq $DATASET_NAME
+      result=$?
     fi
 
-    result=$?
     echo -n "$result" > ./vars/restore_result
     if [ "$result" -eq 0 ]; then
       if [ "$DROP_INPUT_FILES_AFTER_IMPORT" -gt 0 ]; then
