@@ -15,7 +15,7 @@ The target instance for loading data into, or storing test results, need to be e
 2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`
 3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all (default) or some specific datasets to download / restore
 4. Install / verify a few expected dependencies (assuming Ubuntu / Debian)
-  - `apt install postgresql 7zip python3-pip`
+  - `apt install postgresql 7zip python3-pip osm2pgsql`
   - `pip install psycopg`
 5. Run `process_datasets.sh` - datasets will be downloaded / transformed / restored into Postgres one-by-one
    * Subsequent runs of the script for same datasets will not do any processing if the implementation sets the caching vars correctly
