@@ -20,7 +20,7 @@ if [ "$DO_FETCH" -gt 0 ]; then
     echo "Skipping fetch based on fetch_result marker"
   else
     DUMP_SIZE=$(cat ./attrs/dump_size)
-    echo "Fetching $DUMP_SIZE GB from $URL ..."
+    echo "Fetching $DUMP_SIZE MB from $URL ..."
     for i in $(seq -f "%02g" 1 12)
     do
       echo "aws s3 cp s3://nyc-tlc/csv_backup/yellow_tripdata_2021-${i}.csv $DUMP_FOLDER/ --quiet"

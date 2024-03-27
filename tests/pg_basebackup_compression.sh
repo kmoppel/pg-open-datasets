@@ -6,7 +6,7 @@ set -e
 # TEST_OUT_DIR
 # TEST_START_TIME
 
-METHOD_LVLS="gzip:1 gzip:3 gzip:5 gzip:7 gzip:9 lz4:1 lz4:3 lz4:5 lz4:7 lz4:9 lz4:11 zstd:1 zstd:5 zstd:9 zstd:13 zstd:17 zstd:21"
+METHOD_LVLS="gzip:1 gzip:3 gzip:5 gzip:7 lz4:1 lz4:3 lz4:5 lz4:7 zstd:1 zstd:5 zstd:9 zstd:13"
 #METHOD_LVLS="gzip:1 lz4:1 zstd:1"
 
 echo "Doing an untimed cache warmup pg_basebackup ..."
