@@ -12,7 +12,8 @@ The target instance for loading data into, or storing test results, need to be e
 ## Quick start
 
 1. Get the source `git clone https://github.com/kmoppel/pg-open-datasets.git && cd pg-open-datasets`
-2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`
+2. Create a new Postgres instance if needed, and set the PG* connection variables declared at top of `process_datasets.sh`.
+  - One can also leave instance creation to the script - review `DO_INITDB_FOR_EACH_DATASET` / `INITDB_TMP_DIR` then
 3. Review / set the `DATASETS` variable in `process_datasets.sh` to choose all (default) or some specific datasets to download / restore
 4. Install / verify a few expected dependencies (assuming Ubuntu / Debian)
   - `apt install postgresql 7zip python3-pip osm2pgsql`
