@@ -20,7 +20,7 @@ if [ $RESTORE_JOBS -eq 0 ]; then
   export RESTORE_JOBS=1
 fi
 export FRESH_START=0 # Drop old fetch / transform results if any
-export SET_UNLOGGED=1 # PS Could also prolong restore time due to serialization!
+export SET_UNLOGGED=0 # PS Could also prolong restore time due to serialization!
 export DROP_INPUT_FILES_AFTER_IMPORT=0 # Immediately drop the dataset source files after restoring
 export DO_FETCH=1 # Optional, dataset could also pipe everything on restore
 export DO_TRANSFORM=1 # Optional, dataset could also pipe everything on restore
