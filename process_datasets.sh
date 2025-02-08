@@ -5,12 +5,13 @@ set -euo pipefail # Bail on first error
 ### DB to import datasets into. Expected to be there already
 # export PGHOST=/var/run/postgresql/
 export PGHOST=/tmp
-export PGPORT=5555 # Expected to be there if DO_INITDB_FOR_EACH_DATASET not set
+export PGHOST=localhost
+export PGPORT=5432 # Expected to be there if DO_INITDB_FOR_EACH_DATASET not set
 export PGUSER=$USER
 export PGDATABASE=postgres
 export PATH=/usr/lib/postgresql/16/bin:$PATH # Adjust accordingly if not on latest Postgres
 
-export DO_INITDB_FOR_EACH_DATASET=1 # Create a fresh cluster for every dataset
+export DO_INITDB_FOR_EACH_DATASET=0 # Create a fresh cluster for every dataset
 export INITDB_TMP_DIR=/tmp/pg-open-datasets # Only used if DO_INITDB_FOR_EACH_DATASET set
 
 ### Dataset handling
@@ -26,13 +27,13 @@ export DO_FETCH=1 # Optional, dataset could also pipe everything on restore
 export DO_TRANSFORM=1 # Optional, dataset could also pipe everything on restore
 export DO_RESTORE=1
 export DATA_ONLY_RESTORE=0 # No post-data (indexes / constraints) - if dataset supports it
-export DO_TESTS=1 # Run "test" scripts from the `tests` directory for each DB after restore
+export DO_TESTS=0 # Run "test" scripts from the `tests` directory for each DB after restore
 TESTS_TO_RUN="pg_dump_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
 TESTS_TO_RUN="pg_basebackup_compression.sh" # Executes listed scripts from the "tests" folder after restoring a dataset
 export RDB_CONNSTR="host=localhost port=5432 dbname=postgres" # ResultsDB connect string
 export DROP_DB_AFTER_TESTING=0 # Drop the dataset after done with loading / testing. Minimizes storage requirements
 DATASETS=$(find ./datasets/ -mindepth 1 -maxdepth 1 -type d | sed 's@\./datasets/@@g')
-DATASETS="nyc_taxi_rides" # PS can do a manual override here to process only listed datasets
+DATASETS="imdb" # PS can do a manual override here to process only listed datasets
 
 mkdir -p $TEMP_FOLDER
 export MARKER_FILES="./vars/fetch_result ./vars/transform_result ./vars/restore_result" # Used to skip processing steps on re-run if possible

@@ -1,8 +1,14 @@
-# Using a dump file found by Googling for now, seems to be from 2019 though
-# From https://github.com/RyanMarcus/imdb_pg_dataset/blob/master/vagrant/config.sh
+# From IMDB official download site: https://developer.imdb.com/non-commercial-datasets/
+# NB! Schema is currently a simplified version where arrays are just comma separated text,
+# derived from https://github.com/betafcc/imdb-postgres
 
-URL=https://dataverse.harvard.edu/api/access/datafile/:persistentId?persistentId=doi:10.7910/DVN/2QYZBT/TGYUNU
-DUMP_FILE="$TEMP_FOLDER/$DATASET_NAME/imdb.dump"
+
+BASE_URL=https://datasets.imdbws.com
+TSV_FILES="name.basics title.akas title.basics title.crew title.episode title.principals title.ratings"
+TSV_FILES="name.basics title.akas"
+TSV_FILES_SUFFIX=tsv.gz
+
+set -e
 
 if [ "$DO_FETCH" -gt 0 ]; then
   result=1
@@ -13,11 +19,16 @@ if [ "$DO_FETCH" -gt 0 ]; then
     echo "Skipping fetch based on fetch_result marker"
   else
     DUMP_SIZE=$(cat ./attrs/dump_size)
-    echo "Fetching $DUMP_SIZE GB from $URL ..."
-    echo "wget -O $DUMP_FILE $URL"
-    wget -O $DUMP_FILE $URL
-    result=$?
-    echo -n "$result" > ./vars/fetch_result
+    echo "Fetching a total $DUMP_SIZE MB from $BASE_URL ..."
+
+    for file_to_dl in $TSV_FILES ; do
+      URL=$BASE_URL/${file_to_dl}.${TSV_FILES_SUFFIX}
+      DUMP_FILE="${TEMP_FOLDER}/${DATASET_NAME}/${file_to_dl}.${TSV_FILES_SUFFIX}"
+      echo "wget -O $DUMP_FILE $URL"
+      wget -O $DUMP_FILE $URL
+      result=$?
+      echo -n "$result" > ./vars/fetch_result
+    done
   fi
 fi
 
@@ -32,22 +43,34 @@ if [ "$DO_RESTORE" -gt 0 ]; then
   else
     DUMP_SIZE=$(cat ./attrs/dump_size)
 
-    echo "dropdb --if-exists $DATASET_NAME"
-    dropdb --if-exists $DATASET_NAME
+    echo "dropdb --force --if-exists $DATASET_NAME"
+    dropdb --force --if-exists $DATASET_NAME
     echo "createdb $DATASET_NAME"
     createdb $DATASET_NAME
 
-    RESTORE_PREREQ_SQL="CREATE ROLE imdb"
-    psql -Xc "$RESTORE_PREREQ_SQL"
+    if [ "$SET_UNLOGGED" -gt 0 ]; then
+      cat schema_tables.sql | psql -Xq $DATASET_NAME
+    else
+      cat schema_tables.sql | sed 's/UNLOGGED//g' | psql -Xq $DATASET_NAME
+    fi
+
+    for file_to_load in $TSV_FILES ; do
+      table_name=$(echo "$file_to_load" | tr '.' '_')
+      DUMP_FILE="$TEMP_FOLDER/$DATASET_NAME/${file_to_load}.${TSV_FILES_SUFFIX}"
+      echo "zcat $DUMP_FILE | psql -Xc \"copy $table_name from stdin with (format text, header on)"
+      zcat $DUMP_FILE | psql -Xc "copy $table_name from stdin with (format text, header on)"
+
+      result=$?
+      echo -n "$result" > ./vars/fetch_result
+      if [ "$result" -ne 0 ]; then
+        break
+      fi
+    done
 
     if [ "$DATA_ONLY_RESTORE" -gt 0 ]; then
-      echo "pg_restore --section pre-data -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE"
-      pg_restore --section pre-data -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE
-      echo "pg_restore --section data -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE"
-      pg_restore --section data -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE
+      echo "Not creating indexes due to DATA_ONLY_RESTORE"
     else
-      echo "pg_restore -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE"
-      pg_restore -O -j $RESTORE_JOBS -d $DATASET_NAME -Fc $RESTORE_FLAGS $DUMP_FILE
+      psql -X -f schema_constraints.sql $DATASET_NAME
     fi
     result=$?
     echo -n "$result" > ./vars/restore_result
@@ -58,14 +81,3 @@ if [ "$DO_RESTORE" -gt 0 ]; then
     fi
   fi
 fi
-
-
-
-
-# TODO dl directly from IMDB to get latest data + convert using smth like https://github.com/ameerkat/imdb-to-sql
-#wget -A "*tsv.gz" --mirror "https://datasets.imdbws.com/";
-#for f in datasets.imdbws.com/*gz; do
-#  echo "Extracting ${f%.*}";
-#  pv $f | gunzip > ${f%.*}  || break;
-#done
-#
